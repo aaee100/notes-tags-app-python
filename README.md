@@ -63,7 +63,6 @@ notes-tags-app/
 │   ├── tags-filter.png
 │   └── editor-view.png
 ├── requirements.txt
-├── .gitignore
 └── README.md
 ```
 
