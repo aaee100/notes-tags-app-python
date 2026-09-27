@@ -1,0 +1,164 @@
+{
+  "notes": [
+    {
+      "id": "note-001",
+      "title": "Buy groceries",
+      "body": "Milk, bread, apples, cheese, and eggs.",
+      "tags": ["shopping", "daily"],
+      "created": "2025-10-01, 09:00:00",
+      "modified": "2025-10-01, 09:00:00"
+    },
+    {
+      "id": "note-002",
+      "title": "Workout plan",
+      "body": "Chest and triceps today. 45-minute session.",
+      "tags": ["health", "fitness"],
+      "created": "2025-10-02, 08:30:00",
+      "modified": "2025-10-02, 08:30:00"
+    },
+    {
+      "id": "note-003",
+      "title": "Book ideas",
+      "body": "Write notes for new sci-fi novel concept.",
+      "tags": ["writing", "ideas"],
+      "created": "2025-10-03, 14:15:00",
+      "modified": "2025-10-03, 14:15:00"
+    },
+    {
+      "id": "note-004",
+      "title": "Pay electricity bill",
+      "body": "Due on the 12th of this month. Pay online.",
+      "tags": ["finance", "bills"],
+      "created": "2025-10-04, 10:00:00",
+      "modified": "2025-10-04, 10:00:00"
+    },
+    {
+      "id": "note-005",
+      "title": "Weekly meal prep",
+      "body": "Plan 5 meals: pasta, chicken, salad, curry, stir-fry.",
+      "tags": ["cooking", "planning"],
+      "created": "2025-10-05, 11:20:00",
+      "modified": "2025-10-05, 11:20:00"
+    },
+    {
+      "id": "note-006",
+      "title": "Birthday gift for Anna",
+      "body": "Maybe perfume or earrings. Check store later.",
+      "tags": ["shopping", "personal"],
+      "created": "2025-10-06, 16:45:00",
+      "modified": "2025-10-06, 16:45:00"
+    },
+    {
+      "id": "note-007",
+      "title": "Learn Python decorators",
+      "body": "Read tutorial and write 3 examples.",
+      "tags": ["coding", "python", "learning"],
+      "created": "2025-10-07, 19:00:00",
+      "modified": "2025-10-07, 19:00:00"
+    },
+    {
+      "id": "note-008",
+      "title": "Car maintenance",
+      "body": "Oil change and tire pressure check.",
+      "tags": ["car", "maintenance"],
+      "created": "2025-10-08, 09:10:00",
+      "modified": "2025-10-08, 09:10:00"
+    },
+    {
+      "id": "note-009",
+      "title": "Meditation session",
+      "body": "15 min breathing and 10 min mindfulness.",
+      "tags": ["health", "mindfulness"],
+      "created": "2025-10-09, 07:30:00",
+      "modified": "2025-10-09, 07:30:00"
+    },
+    {
+      "id": "note-010",
+      "title": "Guitar practice",
+      "body": "Practice pentatonic scale and one new song.",
+      "tags": ["music", "hobby"],
+      "created": "2025-10-10, 18:00:00",
+      "modified": "2025-10-10, 18:00:00"
+    },
+    {
+      "id": "note-011",
+      "title": "Prepare work report",
+      "body": "Summaries of meetings and project updates.",
+      "tags": ["work", "office"],
+      "created": "2025-10-11, 09:40:00",
+      "modified": "2025-10-11, 09:40:00"
+    },
+    {
+      "id": "note-012",
+      "title": "Clean apartment",
+      "body": "Vacuum, dust shelves, clean bathroom.",
+      "tags": ["home", "chores"],
+      "created": "2025-10-12, 10:30:00",
+      "modified": "2025-10-12, 10:30:00"
+    },
+    {
+      "id": "note-013",
+      "title": "Plan weekend trip",
+      "body": "Choose location: lake or mountains.",
+      "tags": ["travel", "planning"],
+      "created": "2025-10-13, 12:00:00",
+      "modified": "2025-10-13, 12:00:00"
+    },
+    {
+      "id": "note-014",
+      "title": "Organize email inbox",
+      "body": "Archive old messages and delete spam.",
+      "tags": ["digital", "cleanup"],
+      "created": "2025-10-14, 15:10:00",
+      "modified": "2025-10-14, 15:10:00"
+    },
+    {
+      "id": "note-015",
+      "title": "Study machine learning",
+      "body": "Complete lesson 3 of the ML course.",
+      "tags": ["coding", "learning", "AI"],
+      "created": "2025-10-15, 20:00:00",
+      "modified": "2025-10-15, 20:00:00"
+    },
+    {
+      "id": "note-016",
+      "title": "Buy printer ink",
+      "body": "Black and color cartridges.",
+      "tags": ["shopping", "office"],
+      "created": "2025-10-16, 11:50:00",
+      "modified": "2025-10-16, 11:50:00"
+    },
+    {
+      "id": "note-017",
+      "title": "Call mom",
+      "body": "Check how she's doing.",
+      "tags": ["personal", "family"],
+      "created": "2025-10-17, 19:30:00",
+      "modified": "2025-10-17, 19:30:00"
+    },
+    {
+      "id": "note-018",
+      "title": "Test new recipe",
+      "body": "Spicy chicken with honey glaze.",
+      "tags": ["cooking", "food"],
+      "created": "2025-10-18, 17:05:00",
+      "modified": "2025-10-18, 17:05:00"
+    },
+    {
+      "id": "note-019",
+      "title": "Fix leaking faucet",
+      "body": "Tighten valve or replace washer.",
+      "tags": ["home", "repair"],
+      "created": "2025-10-19, 08:20:00",
+      "modified": "2025-10-19, 08:20:00"
+    },
+    {
+      "id": "note-020",
+      "title": "Plan budget",
+      "body": "Review expenses and limit dining out.",
+      "tags": ["finance", "planning"],
+      "created": "2025-10-20, 13:15:00",
+      "modified": "2025-11-17, 16:52:21"
+    }
+  ]
+}
