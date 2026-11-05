@@ -1,10 +1,11 @@
-
-
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
 import json
 import uuid
+import os
+import shutil
+import tempfile
 from datetime import datetime
 
 # ---------------------------
@@ -16,6 +17,12 @@ DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
 DATA_FILE = DATA_DIR / "notes.json"
+BACKUP_FILE = DATA_DIR / "notes.json.bak"
+
+
+class NotesFileError(Exception):
+    """Raised when the notes file cannot be safely loaded."""
+
 
 def ensure_data_file():
     if not DATA_FILE.exists():
@@ -91,34 +98,54 @@ def short_preview(body, length=80):
 # Data functions (load/save) with normalization
 # ---------------------------
 def load_notes():
-    """Load notes and normalize timestamp formats. If normalization changes anything, overwrite file."""
-    ensure_data_file()
-    changed = False
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        try:
+    """Load and validate notes; never treat an unreadable file as an empty list."""
+    try:
+        ensure_data_file()
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-        except Exception:
-            data = {"notes": []}
+    except json.JSONDecodeError as e:
+        raise NotesFileError(
+            f"The notes file contains invalid JSON (line {e.lineno}, column {e.colno}).\n\n"
+            f"Your original file has not been overwritten. If a backup exists, it is here:\n{BACKUP_FILE}"
+        ) from e
+    except (OSError, UnicodeError) as e:
+        raise NotesFileError(
+            f"Could not read the notes file:\n{e}\n\n"
+            f"The original file has not been overwritten."
+        ) from e
 
-    notes = data.get("notes", [])
+    if not isinstance(data, dict) or not isinstance(data.get("notes"), list):
+        raise NotesFileError(
+            "The notes file has an unexpected structure.\n\n"
+            "The original file has not been overwritten. Please restore a backup or repair the file."
+        )
+
+    notes = data["notes"]
+    if not all(isinstance(note, dict) for note in notes):
+        raise NotesFileError(
+            "The notes file contains an invalid note entry.\n\n"
+            "The original file has not been overwritten. Please restore a backup or repair the file."
+        )
+
+    changed = False
     for n in notes:
-        # ensure id exists
-        if "id" not in n or not n.get("id"):
+        # Ensure each note has an ID.
+        if not n.get("id"):
             n["id"] = str(uuid.uuid4())
             changed = True
-        # body key backward compatibility: accept 'content' -> 'body'
+
+        # Backward compatibility: accept 'content' as an older body field.
         if "body" not in n and "content" in n:
             n["body"] = n.pop("content")
             changed = True
-        # ensure tags exist and are list
+
+        # Ensure tags exist and are stored as a list.
         if "tags" not in n or not isinstance(n["tags"], list):
             tags_raw = n.get("tags", "")
-            if isinstance(tags_raw, str):
-                n["tags"] = normalize_tags(tags_raw)
-            else:
-                n["tags"] = []
+            n["tags"] = normalize_tags(tags_raw) if isinstance(tags_raw, str) else []
             changed = True
-        # fix created/modified timestamp formats
+
+        # Normalize creation and modification timestamps.
         created = n.get("created", "")
         modified = n.get("modified", "")
         fixed_created = fix_timestamp(created) if created else get_timestamp()
@@ -130,13 +157,46 @@ def load_notes():
             n["modified"] = fixed_modified
             changed = True
 
+    # Only normalize/save after the entire file has been parsed and validated.
     if changed:
         save_notes(notes)
     return notes
 
+
 def save_notes(notes):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump({"notes": notes}, f, ensure_ascii=False, indent=2)
+    """Save atomically and preserve the previous file as notes.json.bak."""
+    temp_path = None
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=DATA_DIR,
+            prefix=".notes_",
+            suffix=".tmp",
+            delete=False,
+        ) as f:
+            temp_path = Path(f.name)
+            json.dump({"notes": notes}, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+
+        # Back up the current file before replacing it. If the backup fails,
+        # stop rather than risk replacing the only copy of the data.
+        if DATA_FILE.exists():
+            shutil.copy2(DATA_FILE, BACKUP_FILE)
+
+        os.replace(temp_path, DATA_FILE)
+        temp_path = None
+    except (OSError, TypeError, ValueError) as e:
+        raise NotesFileError(f"Could not safely save your notes:\n{e}") from e
+    finally:
+        if temp_path is not None:
+            try:
+                if temp_path.exists():
+                    temp_path.unlink()
+            except OSError:
+                pass
 
 def add_note(title, body, tags_list):
     notes = load_notes()
@@ -260,16 +320,36 @@ class NotesApp:
         # internal state
         self.selected_note_id = None
         self.tag_filter = None  # currently selected tag
+        self._storage_error_shown = False
 
         # load initial
         self.refresh_tags()
         self.refresh_notes_list()
 
+    def _report_storage_error(self, error):
+        """Show a storage error without repeating the same startup warning."""
+        self.status_var.set("Could not safely read or save notes. Check notes.json.")
+        if not self._storage_error_shown:
+            messagebox.showerror("Notes file problem", str(error))
+            self._storage_error_shown = True
+
+    def _load_notes_for_ui(self):
+        """Load notes for a GUI action; return None if loading is unsafe."""
+        try:
+            notes = load_notes()
+            self._storage_error_shown = False
+            return notes
+        except NotesFileError as e:
+            self._report_storage_error(e)
+            return None
+
     # -------------------------
     # Tag handling
     # -------------------------
     def refresh_tags(self):
-        notes = load_notes()
+        notes = self._load_notes_for_ui()
+        if notes is None:
+            return
         tags = []
         for n in notes:
             for t in n.get("tags", []):
@@ -301,7 +381,9 @@ class NotesApp:
     # -------------------------
     def refresh_notes_list(self):
         """Load notes, apply tag + search filters, populate treeview."""
-        notes = load_notes()
+        notes = self._load_notes_for_ui()
+        if notes is None:
+            return
         q = self.search_var.get().strip().lower()
         filtered = []
         for n in notes:
@@ -335,8 +417,10 @@ class NotesApp:
         if not sel:
             return
         note_id = sel[0]
-        notes = load_notes()
-        note = next((n for n in notes if n["id"] == note_id), None)
+        notes = self._load_notes_for_ui()
+        if notes is None:
+            return
+        note = next((n for n in notes if n.get("id") == note_id), None)
         if not note:
             return
         self.selected_note_id = note_id
@@ -373,16 +457,20 @@ class NotesApp:
             messagebox.showerror("Validation", "Please provide a title for the note.")
             return
 
-        if self.selected_note_id:
-            ok = update_note(self.selected_note_id, title, body, tags)
-            if ok:
-                self.status_var.set("Note updated.")
+        try:
+            if self.selected_note_id:
+                ok = update_note(self.selected_note_id, title, body, tags)
+                if ok:
+                    self.status_var.set("Note updated.")
+                else:
+                    self.status_var.set("Update failed. The note may no longer exist.")
             else:
-                self.status_var.set("Update failed.")
-        else:
-            note = add_note(title, body, tags)
-            self.selected_note_id = note["id"]
-            self.status_var.set("Note added.")
+                note = add_note(title, body, tags)
+                self.selected_note_id = note["id"]
+                self.status_var.set("Note added.")
+        except NotesFileError as e:
+            self._report_storage_error(e)
+            return
 
         self.refresh_tags()
         self.refresh_notes_list()
@@ -393,7 +481,11 @@ class NotesApp:
             return
         if not messagebox.askyesno("Confirm", "Delete selected note permanently?"):
             return
-        delete_note(self.selected_note_id)
+        try:
+            delete_note(self.selected_note_id)
+        except NotesFileError as e:
+            self._report_storage_error(e)
+            return
         self.selected_note_id = None
         self.clear_editor()
         self.refresh_tags()
@@ -417,8 +509,10 @@ class NotesApp:
         if not path:
             return
 
-        notes = load_notes()
-        notes_by_id = {n["id"]: n for n in notes}
+        notes = self._load_notes_for_ui()
+        if notes is None:
+            return
+        notes_by_id = {n.get("id"): n for n in notes}
 
         try:
             with open(path, "w", encoding="utf-8") as f:
@@ -432,7 +526,7 @@ class NotesApp:
                     f.write(f"Created: {created}\n")
                     f.write(f"Modified: {modified}\n")
                     f.write(f"Tags: {', '.join(n.get('tags', []))}\n\n")
-                    f.write(n.get("body",""))
+                    f.write(str(n.get("body", "")))
                     f.write("\n\n" + ("-"*60) + "\n\n")
             messagebox.showinfo("Exported", f"Saved {len(selected)} notes to:\n{path}")
         except Exception as e:
