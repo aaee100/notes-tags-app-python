@@ -145,4 +145,4 @@ The application uses Python's standard library and does not require external pac
 
 For a more detailed explanation of the design, implementation, and development process, see:
 
-[article](article.md)
+[Building a Notes and Tags App with Python and Tkinter](article.md)
