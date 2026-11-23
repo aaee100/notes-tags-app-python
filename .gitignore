@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+
+data/notes.json
+data/notes.json.bak
+data/.notes_*.tmp
